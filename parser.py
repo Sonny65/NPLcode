@@ -2,6 +2,12 @@ import nltk
 from nltk import conlltags2tree, tree2conlltags
 from nltk.tokenize import *
 
+# set up NER path
+from nltk.tag.stanford import StanfordNERTagger
+jar = './stanford-ner-tagger/stanford-ner.jar'
+model = './stanford-ner-tagger/english.all.3class.distsim.crf.ser.gz'
+ner_tagger = StanfordNERTagger(model, jar, encoding='utf8')
+
 # corpus trainning data
 from nltk.corpus import conll2000
 
@@ -16,16 +22,18 @@ chunkGram = r"""
 def chunking(input):
     token = word_tokenize(input)
     tag = nltk.pos_tag(token)
+    # nameEnt = ner_tagger.tag(token)
     nameEnt = nltk.ne_chunk(tag)
 
     chunkParser = nltk.RegexpParser(chunkGram)
+
     chunk = chunkParser.parse(nameEnt)
 
     # iob_tag = tree2conlltags(chunk)
     #
     # tree = conlltags2tree(iob_tag)
 
-    # print chunk
+    print chunk
 
     return chunk
 
