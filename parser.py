@@ -2,26 +2,37 @@ import nltk
 from nltk import conlltags2tree, tree2conlltags
 from nltk.tokenize import *
 
+# download commented out for future use on other machine
+# nltk.download('maxent_treebank_pos_tagger')
+# nltk.download('path')
+# nltk.download()
+
 # set up NER path
-from nltk.tag.stanford import StanfordNERTagger
-jar = './stanford-ner-tagger/stanford-ner.jar'
-model = './stanford-ner-tagger/english.all.3class.distsim.crf.ser.gz'
-ner_tagger = StanfordNERTagger(model, jar, encoding='utf8')
+# from nltk.tag.stanford import StanfordNERTagger
+# jar = './stanford-ner-tagger/stanford-ner.jar'
+# model = './stanford-ner-tagger/english.all.3class.distsim.crf.ser.gz'
+# ner_tagger = StanfordNERTagger(model, jar, encoding='utf8')
 
 # corpus trainning data
 from nltk.corpus import conll2000
+
+# customize tagger
+import nltk.tag, nltk.data
+default_tagger = nltk.data.load(nltk.tag._POS_TAGGER)
+model = {'living': 'SP','dining': 'SP'}
+tagger = nltk.tag.UnigramTagger(model=model, backoff=default_tagger)
 
 # chunkLocation =  r"""Wh: {<WRB>}"""{<PRP.?>*<RB.?>*<JJ.?>*<POS.?>*<NN>}
 chunkGram = r"""
                 WH: {<WRB>}
                 SUFDESC: {<IN><PRP.?|RB.?|JJ.?|DT>*<NN>}
                 DESC: {<PRP.?|RB.?|JJ.?|DT>*(<PERSON><POS>)*}
-                TAR: {<DESC>*(<CC><DESC>+)*<NN|GRE><SUFDESC>*<DESC>*}
+                TAR: {<DESC>*(<CC><DESC>+)*<SP>*<NN|GRE><SUFDESC>*<DESC>*}
                 """
 
 def chunking(input):
     token = word_tokenize(input)
-    tag = nltk.pos_tag(token)
+    tag = tagger.tag(token)
     # nameEnt = ner_tagger.tag(token)
     nameEnt = nltk.ne_chunk(tag)
 
@@ -33,7 +44,7 @@ def chunking(input):
     #
     # tree = conlltags2tree(iob_tag)
 
-    print chunk
+    # print chunk
 
     return chunk
 
@@ -76,6 +87,7 @@ def wh_loc(chunk):
 def target_chunk(subtree):
 
     descCollection = []
+    target = ""
 
     for element in subtree:
 
@@ -86,8 +98,12 @@ def target_chunk(subtree):
                 desc.append(word[0])
             descCollection.append(desc)
         else:
-            descCollection = [element[0]]+descCollection
+            if element[1] == "SP":
+                target = element[0]+target
+            if element[1] == "NN":
+                target = target+" "+element[0]
 
+    descCollection = [target]+descCollection
     return descCollection
 
 while True:
